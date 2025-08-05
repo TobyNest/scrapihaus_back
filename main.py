@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from beanie import init_beanie
 import motor.motor_asyncio
-from models import Housing  # Importe seu modelo Beanie
+from models import Imovel  # Importe seu modelo Beanie
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 import os
@@ -12,7 +12,7 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGODB_URL"))
-    await init_beanie(database=client.db_name, document_models=[Housing])
+    await init_beanie(database=client.db_name, document_models=[Imovel])
     yield
 
 
@@ -27,7 +27,7 @@ app.add_middleware(
 )
 
 
-@app.get("/housings/", response_model=list[Housing])
+@app.get("/housings/", response_model=list[Imovel])
 async def get_housings(
     # pesquisar tipo, bairro, area, quartos, banheiros, vagas_garagem
     tipo: str = None,
@@ -52,25 +52,25 @@ async def get_housings(
 
     filters = []
     if tipo:
-        filters.append(Housing.tipo == tipo)
+        filters.append(Imovel.tipo == tipo)
     if bairro:
-        filters.append(Housing.bairro == bairro)
+        filters.append(Imovel.bairro == bairro)
     if quartos is not None:
-        filters.append(Housing.quartos == quartos)
+        filters.append(Imovel.quartos == quartos)
     if banheiros is not None:
-        filters.append(Housing.banheiros == banheiros)
+        filters.append(Imovel.banheiros == banheiros)
     if vagas_garagem is not None:
-        filters.append(Housing.vagas_garagem == vagas_garagem)
+        filters.append(Imovel.vagas_garagem == vagas_garagem)
 
     if filters:
-        housings = await Housing.find(*filters).to_list()
+        housings = await Imovel.find(*filters).to_list()
     else:
-        housings = await Housing.find_all().to_list()
+        housings = await Imovel.find_all().to_list()
 
     return housings
 
 
-@app.post("/housings/", response_model=Housing, status_code=201)
-async def create_housing(housing: Housing):
+@app.post("/housings/", response_model=Imovel, status_code=201)
+async def create_housing(housing: Imovel):
     await housing.create()
     return housing
