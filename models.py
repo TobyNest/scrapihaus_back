@@ -19,4 +19,4 @@ class Imovel(Document):
     link: str
 
     class Settings:
-        name = "housings"  # Nome da "collection" no MongoDB
+        name = "Imovel"  # Nome da "collection" no MongoDB

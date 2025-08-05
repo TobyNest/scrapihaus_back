@@ -12,7 +12,7 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGODB_URL"))
-    await init_beanie(database=client.db_name, document_models=[Imovel])
+    await init_beanie(database=client.housings, document_models=[Imovel])
     yield
 
 
