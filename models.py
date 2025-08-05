@@ -3,7 +3,7 @@ from beanie import Document
 from pydantic import BaseModel
 
 
-class Housing(Document):
+class Imovel(Document):
     data_coleta: datetime
     bairro: str
     tipo: str  #  ("casa", "apartamento", "lote/terreno")
