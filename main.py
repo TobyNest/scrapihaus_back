@@ -76,9 +76,9 @@ async def get_housings(
     if vagas_garagem is not None:
         filters.append(Imovel.vagas_garagem == vagas_garagem)
     if area_min is not None:
-        filters.append(Imovel.area >= area_min)
+        filters.append(Imovel.area_privativa >= area_min)
     if area_max is not None:
-        filters.append(Imovel.area <= area_max)
+        filters.append(Imovel.area_privativa <= area_max)
 
     if filters:
         housings = await Imovel.find(*filters).to_list()
