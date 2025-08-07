@@ -35,6 +35,8 @@ async def get_housings(
     quartos: int = None,
     banheiros: int = None,
     vagas_garagem: int = None,
+    area_min: float = None,
+    area_max: float = None,
 ):
     # valida os parâmetros de pesquisa
     if quartos is not None and quartos < 0:
@@ -49,6 +51,18 @@ async def get_housings(
         raise HTTPException(
             status_code=400, detail="vagas_garagem must be a non-negative integer"
         )
+    if area_min is not None and area_min < 0:
+        raise HTTPException(
+            status_code=400, detail="area_min must be a non-negative float"
+        )
+    if area_max is not None and area_max < 0:
+        raise HTTPException(
+            status_code=400, detail="area_max must be a non-negative float"
+        )
+    if area_min is not None and area_max is not None and area_min > area_max:
+        raise HTTPException(
+            status_code=400, detail="area_min cannot be greater than area_max"
+        )
 
     filters = []
     if tipo:
@@ -61,6 +75,10 @@ async def get_housings(
         filters.append(Imovel.banheiros == banheiros)
     if vagas_garagem is not None:
         filters.append(Imovel.vagas_garagem == vagas_garagem)
+    if area_min is not None:
+        filters.append(Imovel.area >= area_min)
+    if area_max is not None:
+        filters.append(Imovel.area <= area_max)
 
     if filters:
         housings = await Imovel.find(*filters).to_list()
