@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
@@ -8,9 +9,12 @@ from models import User
 import os
 
 # Configuração de segurança
+load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 ALGORITHM = os.getenv("HASHING", "")
 ACCESS_TOKEN_EXPIRE_MINUTES = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+if ACCESS_TOKEN_EXPIRE_MINUTES:
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(ACCESS_TOKEN_EXPIRE_MINUTES)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
@@ -32,7 +36,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.now() + expires_delta
     else:
-        expire = datetime.now() + timedelta(minutes=15)
+        minutes = ACCESS_TOKEN_EXPIRE_MINUTES if ACCESS_TOKEN_EXPIRE_MINUTES else 15
+        expire = datetime.now() + timedelta(minutes=minutes)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
