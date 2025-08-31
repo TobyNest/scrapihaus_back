@@ -18,6 +18,8 @@ if ACCESS_TOKEN_EXPIRE_MINUTES:
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
+# Optional bearer that doesn't raise on missing credentials. Use for endpoints that allow anonymous access.
+security_optional = HTTPBearer(auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -85,3 +87,31 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+async def get_current_user_optional(credentials: HTTPAuthorizationCredentials = Depends(security_optional)) -> Optional[User]:
+    """Obtém o usuário atual se o token JWT estiver presente; retorna None quando não há credenciais.
+
+    - Se não houver credenciais, retorna None.
+    - Se houver credenciais inválidas, levanta HTTPException 401.
+    """
+    if not credentials:
+        return None
+
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    user = await get_user_by_email(email)
+    if user is None:
+        raise credentials_exception
+    return user

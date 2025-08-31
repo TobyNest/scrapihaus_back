@@ -8,12 +8,19 @@ from auth import (
     authenticate_user, 
     create_access_token, 
     get_current_active_user,
-    ACCESS_TOKEN_EXPIRE_MINUTES
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    get_current_user_optional,
 )
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
-from datetime import timedelta
+from datetime import datetime, timedelta
 import os
+from fastapi import Request
+from datetime import datetime, timedelta
+
+# free quota configuration (env) - number of free requests allowed per anonymous IP (permanent)
+FREE_REQUESTS_LIMIT = int(os.getenv("FREE_REQUESTS_LIMIT", "20"))
+
 
 load_dotenv()
 
@@ -94,7 +101,8 @@ async def get_current_user_info(current_user: User = Depends(get_current_active_
 
 @app.get("/housings/", response_model=list[Imovel])
 async def get_housings(
-    current_user: User = Depends(get_current_active_user),
+    request: Request,
+    current_user: User | None = Depends(get_current_user_optional),
     # pesquisar tipo, bairro, area, quartos, banheiros, vagas_garagem
     tipo: str = None,
     bairro: list[str] | None = Query(None),
@@ -129,6 +137,18 @@ async def get_housings(
         raise HTTPException(
             status_code=400, detail="area_min cannot be greater than area_max"
         )
+
+    # determine client IP early (used for anonymous quota and for saving history)
+    client_ip = request.client.host if request.client else "unknown"
+
+    # Enforce free anonymous quota per client IP when user is not authenticated
+    if current_user is None:
+        anon_id = f"anonymous:{client_ip}"
+        # count previous anonymous searches persisted in DB for this IP
+        anon_count = await SearchHistory.find(SearchHistory.user_id == anon_id).count()
+        if anon_count >= FREE_REQUESTS_LIMIT:
+            # quota exceeded -> require authentication
+            raise HTTPException(status_code=401, detail="Free request quota exceeded; please register or login")
 
     filters = []
     if tipo:
@@ -168,9 +188,10 @@ async def get_housings(
     if area_max is not None:
         search_params["area_max"] = area_max
 
-    # Salva no histórico
+    # Salva no histórico (usa id do usuário autenticado ou marca como anonymous:<ip>)
+    user_id = str(current_user.id) if current_user else f"anonymous:{client_ip}"
     search_history = SearchHistory(
-        user_id=str(current_user.id),
+        user_id=user_id,
         search_params=search_params,
         results_count=len(housings)
     )
