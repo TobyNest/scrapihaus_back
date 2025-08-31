@@ -28,7 +28,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://tobynest.github.io","http://localhost:3000"],  # ajuste conforme a porta do seu frontend
+    allow_origins=["https://tobynest.github.io","http://localhost:3000","https://scrapihaus.vercel.app"],  # ajuste conforme a porta do seu frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
