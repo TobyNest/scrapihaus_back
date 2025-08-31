@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from beanie import init_beanie
 import motor.motor_asyncio
@@ -97,7 +97,7 @@ async def get_housings(
     current_user: User = Depends(get_current_active_user),
     # pesquisar tipo, bairro, area, quartos, banheiros, vagas_garagem
     tipo: str = None,
-    bairro: str = None,
+    bairro: list[str] | None = Query(None),
     quartos: int = None,
     banheiros: int = None,
     vagas_garagem: int = None,
@@ -134,7 +134,7 @@ async def get_housings(
     if tipo:
         filters.append(Imovel.tipo == tipo)
     if bairro:
-        filters.append(Imovel.bairro == bairro)
+        filters.append(Imovel.bairro.in_(bairro))
     if quartos is not None:
         filters.append(Imovel.quartos == quartos)
     if banheiros is not None:
