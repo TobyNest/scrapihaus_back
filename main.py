@@ -67,8 +67,9 @@ async def register_user(user_data: UserCreate):
         id=str(user.id),
         email=user.email,
         full_name=user.full_name,
-        is_active=user.is_active,
-        created_at=user.created_at
+    is_active=user.is_active,
+    is_admin=getattr(user, "is_admin", False),
+    created_at=user.created_at
     )
 
 
@@ -95,8 +96,9 @@ async def get_current_user_info(current_user: User = Depends(get_current_active_
         id=str(current_user.id),
         email=current_user.email,
         full_name=current_user.full_name,
-        is_active=current_user.is_active,
-        created_at=current_user.created_at
+    is_active=current_user.is_active,
+    is_admin=getattr(current_user, "is_admin", False),
+    created_at=current_user.created_at
     )
 
 
