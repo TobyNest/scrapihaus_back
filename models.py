@@ -10,7 +10,8 @@ class User(Document):
     hashed_password: str
     full_name: str
     is_active: bool = True
-    created_at: datetime = datetime.utcnow()
+    is_admin: bool = False
+    created_at: datetime = datetime.now()
 
     class Settings:
         name = "users"
@@ -35,6 +36,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     full_name: str
     is_active: bool
+    is_admin: bool
     created_at: datetime
 
 

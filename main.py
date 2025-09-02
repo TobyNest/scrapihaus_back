@@ -8,6 +8,7 @@ from auth import (
     authenticate_user, 
     create_access_token, 
     get_current_active_user,
+    get_current_admin_user,
     ACCESS_TOKEN_EXPIRE_MINUTES,
     get_current_user_optional,
 )
@@ -97,6 +98,34 @@ async def get_current_user_info(current_user: User = Depends(get_current_active_
         is_active=current_user.is_active,
         created_at=current_user.created_at
     )
+
+
+@app.get("/admin/users", response_model=list[UserResponse])
+async def admin_list_users(admin_user: User = Depends(get_current_admin_user)):
+    """Lista todos os usuários (somente admin)."""
+    users = await User.find_all().to_list()
+    return [
+        UserResponse(
+            id=str(u.id),
+            email=u.email,
+            full_name=u.full_name,
+            is_active=u.is_active,
+            is_admin=getattr(u, "is_admin", False),
+            created_at=u.created_at,
+        )
+        for u in users
+    ]
+
+@app.delete("/admin/users/{user_id}")
+async def admin_delete_user(user_id: str, admin_user: User = Depends(get_current_admin_user)):
+    """Deleta um usuário por id (somente admin)."""
+    user = await User.get(user_id)
+    if not user:
+        user = await User.find_one(User.id == user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    await user.delete()
+    return {"message": "User deleted successfully"}
 
 
 @app.get("/housings/", response_model=list[Imovel])

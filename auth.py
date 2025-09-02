@@ -36,10 +36,11 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Cria token JWT"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now() + expires_delta
+        # Use UTC to avoid timezone-related validation issues
+        expire = datetime.utcnow() + expires_delta
     else:
         minutes = ACCESS_TOKEN_EXPIRE_MINUTES if ACCESS_TOKEN_EXPIRE_MINUTES else 15
-        expire = datetime.now() + timedelta(minutes=minutes)
+        expire = datetime.utcnow() + timedelta(minutes=minutes)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -86,6 +87,13 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     """Obtém usuário ativo atual"""
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+async def get_current_admin_user(current_user: User = Depends(get_current_active_user)) -> User:
+    """Dependency que garante que o usuário atual é admin."""
+    if not getattr(current_user, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
     return current_user
 
 
