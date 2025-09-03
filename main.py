@@ -234,7 +234,7 @@ async def get_housings(
     return housings
 
 
-@app.get("/my-searches/", response_model=list[SearchHistory])
+@app.get("/my-searches", response_model=list[SearchHistory])
 async def get_my_search_history(
     current_user: User = Depends(get_current_active_user),
     limit: int = 50,
@@ -269,7 +269,7 @@ async def delete_search_history(
     return {"message": "Search history deleted successfully"}
 
 
-@app.delete("/my-searches/")
+@app.delete("/my-searches")
 async def clear_search_history(current_user: User = Depends(get_current_active_user)):
     """Limpa todo o histórico de pesquisas do usuário"""
     await SearchHistory.find(SearchHistory.user_id == str(current_user.id)).delete()
