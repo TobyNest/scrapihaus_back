@@ -181,24 +181,27 @@ async def get_housings(
             # quota exceeded -> require authentication
             raise HTTPException(status_code=401, detail="Free request quota exceeded; please register or login")
 
-    filters = []
+    query: dict = {}
     if tipo:
-        filters.append(Imovel.tipo == tipo)
+        query["tipo"] = tipo
     if bairro:
-        filters.append(Imovel.bairro.in_(bairro))
+        query["bairro"] = {"$in": bairro}
     if quartos is not None:
-        filters.append(Imovel.quartos == quartos)
+        query["quartos"] = quartos
     if banheiros is not None:
-        filters.append(Imovel.banheiros == banheiros)
+        query["banheiros"] = banheiros
     if vagas_garagem is not None:
-        filters.append(Imovel.vagas_garagem == vagas_garagem)
-    if area_min is not None:
-        filters.append(Imovel.area_privativa >= area_min)
-    if area_max is not None:
-        filters.append(Imovel.area_privativa <= area_max)
+        query["vagas_garagem"] = vagas_garagem
+    if area_min is not None or area_max is not None:
+        area_query: dict = {}
+        if area_min is not None:
+            area_query["$gte"] = area_min
+        if area_max is not None:
+            area_query["$lte"] = area_max
+        query["area_privativa"] = area_query
 
-    if filters:
-        housings = await Imovel.find(*filters).to_list()
+    if query:
+        housings = await Imovel.find(query).to_list()
     else:
         housings = await Imovel.find_all().to_list()
 
