@@ -1,3 +1,4 @@
+import re
 from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from beanie import init_beanie
@@ -53,8 +54,19 @@ async def register_user(user_data: UserCreate):
             status_code=400, 
             detail="Email already registered"
         )
-    
-    # Cria novo usuário
+    # verificar se e-mail ou senha são vazios
+    if not user_data.email or not user_data.password or user_data.email.strip() == "" or user_data.password.strip() == "":
+        raise HTTPException(
+            status_code=400,
+            detail="Email and password cannot be empty"
+        )
+    # pattern password
+    pattern = "^(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}$"
+    if not re.match(pattern, user_data.password):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 6 characters long and contain at least one number and one special character"
+        )
     hashed_password = get_password_hash(user_data.password)
     user = User(
         email=user_data.email,
